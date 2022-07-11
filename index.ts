@@ -96,7 +96,8 @@ try{
       const token = jwt.sign({id}, process.env.SECRET, {
                     expiresIn: 43200 // expires in 12h
                     });
-      return res.json({ auth: true, token: token})  //JWT TOKEN RES
+      res.cookie('token',token,{httpOnly:true}) 
+      return res.json({ auth: true, token: token})  //JWT TOKEN RES test
     }
       return res.status(500).send("Login inválido !")
     }
@@ -111,6 +112,7 @@ catch{
 app.post('/AdicionarCarro', verifyJWT, async (req,res)=>{
   //proteger contra duplicatas em objetos tipo unique, ex: placa
   const name:string = req.body.name
+  const brand:string = req.body.brand
   const description:string = req.body.description
   const plate:string = req.body.plate
   const year:number = req.body.year
@@ -121,7 +123,7 @@ app.post('/AdicionarCarro', verifyJWT, async (req,res)=>{
   
   try{ 
     const selectQuery = `(SELECT id_user FROM user WHERE username='${username}')`
-    const result = (await db).query(`INSERT INTO carro (name, description, plate, year, color, price, dono_fk) VALUES (?,?,?,?,?,?,${selectQuery})`,[name,description,plate,year,color,price])
+    const result = (await db).query(`INSERT INTO carro (name, description, plate, year, color, price, brand, dono_fk) VALUES (?,?,?,?,?,?,?,${selectQuery})`,[name,description,plate,year,color,price,brand])
     // console.log([name,description,plate,year,color,price,])
     res.send(`${name} foi adicionado`)
   }
@@ -138,7 +140,9 @@ interface ObjResCarro{
   plate:string,
   year:number,
   color:string,
-  price:number
+  price:number,
+  isFav:boolean,
+  brand:string,
 }
   const result = (await db).query(`SELECT * FROM ${databaseName}.carro`)
   const [rows] = await result
@@ -146,7 +150,7 @@ interface ObjResCarro{
   const response:Array<ObjResCarro> = []
   const destructuring:Array<any> = [rows].flat()
   destructuring.forEach((e,i,arr)=>{
-    response.push({id_carro:arr[i][0], name:arr[i][2], description:arr[i][3], plate:arr[i][4], year:arr[i][5], color:arr[i][6], price:arr[i][7]})
+    response.push({id_carro:arr[i][0], name:arr[i][2], description:arr[i][3], plate:arr[i][4], year:arr[i][5], color:arr[i][6], price:arr[i][7], brand:arr[i][9], isFav:false})
   })
 
   res.status(200).send(response)
